@@ -1,107 +1,104 @@
 var requestify = require('requestify');
-var baseURL = "https://api.paywithfire.com/business";
-var KEY = "";
+var sha256 = require('sha256');
 
-exports.initialize = function(key) {
-	KEY = key;
+var baseURL = "https://api.paywithfire.com/business";
+var CLIENT_ID = "";
+var CLIENT_KEY = "";
+var REFRESH_TOKEN = "";
+var ACCESS_TOKEN = "";
+
+exports.initialize = function(clientId, clientKey, refreshToken) {
+	CLIENT_ID = clientId;
+	CLIENT_KEY = clientKey;
+	REFRESH_TOKEN = refreshToken;
+
 };
 
-exports.CapturePlusInteractiveFind = function(data, next) {
+exports.login = function(next) {
 
-    requestify.request(baseURL + "/CapturePlus/Interactive/Find/v2.10/json3.ws", {
+	var nonce = new Date().getTime();
+
+    var toHash = nonce + CLIENT_KEY;
+    var secret = sha256(toHash);        
+      
+    var request = {
+    		clientId: CLIENT_ID,
+    		refreshToken: REFRESH_TOKEN,
+    		nonce: nonce,
+    		grantType: "AccessToken",
+    		clientSecret: secret
+    };
+    
+    requestify.request(baseURL + "/v1/apps/accesstokens", {
             method: "POST",
-            params: {
-				Key: KEY,
-				SearchTerm: data.searchTerm,
-				LastId : data.lastId,
-				SearchFor : data.searchFor,
-				Country : data.country,
-				LanguagePreference : data.languagePreference,
-				MaxSuggestions : data.maxSuggestions,
-				MaxResults : data.maxResults				
-			},
+            body: request,
             dataType: "json"
-            }
-    )
+    })
 	.then(function(response) {
 		var body = JSON.parse(response.body);
-		// Test for an error
-		if (body.Items.length == 1 && typeof(body.Items[0].Error) != "undefined") {
-		    // Show the error message
-		    next( {
-			description: body.Items[0].Description
-		    }, null);
-		}
-		else {
-		    // Check if there were any items found
-		    if (body.Items.length == 0)
-		    	next(null, []);
-		    else {
-		    	next(null, body.Items);
-		    }
-		}
-	 });
+		ACCESS_TOKEN = body.accessToken;
+		next(null, body);
+	});
+    
 };  
 
-exports.CapturePlusInteractiveRetrieve = function(data, next) {
-
-    requestify.request(baseURL + "/CapturePlus/Interactive/Retrieve/v2.10/json3.ws", {
-            method: "POST",
-            params: {
-				Key: KEY,
-				Id: data.id				
-			},
-            dataType: "json"
-            }
-    )
-	.then(function(response) {
-		var body = JSON.parse(response.body);
-		// Test for an error
-		if (body.Items.length == 1 && typeof(body.Items[0].Error) != "undefined") {
-		    // Show the error message
-		    next( {
-			description: body.Items[0].Description
-		    }, null);
-		}
-		else {
-		    // Check if there were any items found
-		    if (body.Items.length == 0)
-		    	next(null, []);
-		    else {
-		    	next(null, body.Items);
-		    }
-		}
-	 });
-};  
-
-
-exports.RetrieveByAddress= function(data, next) {
-
-        requestify.request(baseURL + "/PostcodeAnywhere/Interactive/RetrieveByAddress/v1.20/json3.ws", {
-                method: "POST",
-                params: {
-			Key: KEY,
-			Address: data.address,
-			Company: data.company
+exports.accounts = function(next) {
+	requestify.request(baseURL + "/v1/accounts", {
+		method: "GET",
+		headers: { 
+			'Authorization': 'Bearer ' + ACCESS_TOKEN
 		},
-                dataType: "json"
-                })
-                .then(function(response) {
-			var body = JSON.parse(response.body);
-			// Test for an error
-			if (body.Items.length == 1 && typeof(body.Items[0].Error) != "undefined") {
-			    // Show the error message
-			    next( {
-				description: body.Items[0].Description
-			    }, null);
-			}
-			else {
-			    // Check if there were any items found
-			    if (body.Items.length == 0)
-				next(null, []);
-			    else {
-				next(null, body.Items);
-			    }
-			}
-		 });
-};  
+	    dataType: "json"
+	})
+	.then(function(response) {
+		var body = JSON.parse(response.body);
+		next(null, body.accounts);
+	});
+};
+
+exports.transactionsForAccount = function(account, paging, next) {
+	requestify.request(baseURL + "/v1/accounts/" + account + "/transactions", {
+		method: "GET",
+		params: {
+			limit: paging.limit,
+			offset: paging.offset
+		},
+		headers: { 
+			'Authorization': 'Bearer ' + ACCESS_TOKEN
+		},
+	    dataType: "json"
+	})
+	.then(function(response) {
+		var body = JSON.parse(response.body);
+		next(null, body);
+	})
+	.fail(function(response) {
+		console.log(response);
+	});
+};
+
+exports.filterTransactionsForAccount = function(account, keyword, dateRange, paging, next) {
+	requestify.request(baseURL + "/v1/accounts/" + account + "/transactions/filter", {
+		method: "GET",
+		params: {
+			limit: paging.limit,
+			offset: paging.offset,
+			dateRangeFrom: dateRange.from || 0,
+			dateRangeTo: dateRange.to || new Date().getTime(),
+			searchKeyword: keyword || ""
+		},
+		headers: { 
+			'Authorization': 'Bearer ' + ACCESS_TOKEN
+		},
+	    dataType: "json"
+	})
+	.then(function(response) {
+		var body = JSON.parse(response.body);
+		next(null, body);
+	})
+	.fail(function(response) {
+		console.log(response);
+	});
+};
+
+

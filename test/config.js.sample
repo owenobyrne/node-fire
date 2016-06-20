@@ -1,0 +1,5 @@
+exports.credentials = {
+		clientId: "CLIENTID", 
+		clientKey: "CLIENTKEY", 
+		refreshToken: "REFRESHTOKEN"
+};

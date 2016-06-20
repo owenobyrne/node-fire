@@ -1,13 +1,35 @@
 var fire = require("./../index");
+var credentials = require("./config").credentials;
 
-fire.initialize("XXXX-XXXX-XXXX-XXXX");
+fire.initialize(credentials.clientId, credentials.clientKey, credentials.refreshToken);
 
-// Returns the full address details based on the Id.
-// http://www.postcodeanywhere.co.uk/support/webservice/captureplus/interactive/retrieve/2.1/
-//postcodeanywhere.CapturePlusInteractiveRetrieve({id: "GBR|23926131"}, function(err, data) {
-//	if (err) { console.log(err.description); return false; }
-//	console.log("response:");
-//	console.log(data);
-//});
+fire.login(function(err, app) {
+	fire.accounts(function(err, accounts) {
+		//console.log(accounts);
+		
+//		fire.transactionsForAccount(accounts[0].ican, { offset: 0, limit: 25 }, function(err, transactions) {
+//			console.log(transactions);
+//		});
+//		
+		fire.filterTransactionsForAccount(
+				accounts[0].ican, 
+				"",
+				{ from: 1459465200000, to: 1466463599999 },
+				{ offset: 0, limit: 25 }, 
+				function(err, transactions) {
+			
+					console.log(transactions);
+		});
 
+		fire.filterTransactionsForAccount(
+				accounts[0].ican, 
+				"Testing",
+				{},
+				{ offset: 0, limit: 25 }, 
+				function(err, transactions) {
+			
+					console.log(transactions);
+		});
 
+	});
+});

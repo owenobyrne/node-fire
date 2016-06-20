@@ -15,7 +15,8 @@
     "fire"
   ],
  "dependencies": {
-    "requestify": "~0.1.16"
+    "requestify": "~0.1.16",
+    "sha256": "*"
   },
   "author": "Owen O Byrne",
   "license": "MIT",
