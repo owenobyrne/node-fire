@@ -1,0 +1,25 @@
+{
+  "name": "fire",
+  "version": "0.0.2",
+  "description": "A Node wrapper for the Fire Business Account API",
+  "main": "index.js",
+  "scripts": {
+    "test": "for f in test/*; do echo \"$f\"; node \"$f\"; done; echo 'passed!'; exit 0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/owenobyrne/node-fire.git"
+  },
+  "keywords": [
+    "node",
+    "fire"
+  ],
+ "dependencies": {
+    "requestify": "~0.1.16"
+  },
+  "author": "Owen O Byrne",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/owenobyrne/node-fire/issues"
+  }
+}
